@@ -1,0 +1,317 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Приют "Верные друзья"{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="{% url 'home' %}" class="logo">🐾 Верные друзья</a>
+            <ul class="nav-links">
+                <li><a href="{% url 'animals_list' %}">Животные</a></li>
+                <li><a href="{% url 'about' %}">О приюте</a></li>
+                <li><a href="{% url 'help' %}">Помочь</a></li>
+                <li><a href="{% url 'contact' %}">Контакты</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="{% url 'profile' %}">👤 {{ user.username }}</a></li>
+                    <li><a href="{% url 'logout' %}" class="btn-login">Выйти</a></li>
+                {% else %}
+                    <li><a href="#" class="btn-login" onclick="openLoginModal()">Войти</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Подарите дом нашим друзьям!</h1>
+            <p>Каждое животное заслуживает любви и заботы. Найдите своего верного друга среди наших питомцев</p>
+            <button class="btn-primary" onclick="scrollToSearch()">
+                Найти друга
+            </button>
+        </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="search-section" id="search">
+        <div class="search-card">
+            <form method="GET" action="{% url 'animals_list' %}" id="searchForm">
+                <div class="search-filters">
+                    <div class="filter-group">
+                        <label>Тип животного</label>
+                        <select name="animal_type" id="animalType">
+                            <option value="">Все</option>
+                            <option value="dog">Собаки</option>
+                            <option value="cat">Кошки</option>
+                            <option value="other">Другие</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Возраст</label>
+                        <select name="age" id="age">
+                            <option value="">Любой</option>
+                            <option value="young">До 1 года</option>
+                            <option value="adult">1-7 лет</option>
+                            <option value="senior">Старше 7 лет</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Пол</label>
+                        <select name="gender" id="gender">
+                            <option value="">Любой</option>
+                            <option value="male">Самец</option>
+                            <option value="female">Самка</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Размер</label>
+                        <select name="size" id="size">
+                            <option value="">Любой</option>
+                            <option value="small">Маленький</option>
+                            <option value="medium">Средний</option>
+                            <option value="large">Крупный</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-search">🔍 Найти питомца</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Animals Section -->
+    <section class="animals-section" id="animals">
+        <h2 class="section-title">Наши питомцы ищут дом</h2>
+        <div class="animals-grid" id="animalsGrid">
+            {% for animal in animals %}
+            <div class="animal-card" onclick="window.location.href='{% url "animal.detail" animal.id %}'">
+                <div class="animal-image">
+                    {% if animal.photo %}
+                        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}">
+                    {% else %}
+                        <span>{{ animal.get_emoji }}</span>
+                    {% endif %}
+                    <span class="animal-badge">{{ animal.status }}</span>
+                </div>
+                <div class="animal-info">
+                    <h3 class="animal-name">{{ animal.name }}</h3>
+                    <p class="animal-details">{{ animal.get_age_display }} • {{ animal.get_gender_display }} • {{ animal.get_size_display }}</p>
+                    <p class="animal-description">{{ animal.description|truncatewords:15 }}</p>
+                    <button class="btn-reserve" onclick="event.stopPropagation(); openReserveModal({ animal.id }, '{{ animal.name }}')">
+                        📅 Забронировать встречу
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <p style="grid-column: 1/-1; text-align: center; color: var(--gray);">Животные не найдены</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>О приюте</h3>
+                <ul>
+                    <li><a href="{% url 'about' %}">Наша миссия</a></li>
+                    <li><a href="{% url 'team' %}">Команда</a></li>
+                    <li><a href="{% url 'reports' %}">Отчеты</a></li>
+                    <li><a href="{% url 'careers' %}">Вакансии</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Помощь</h3>
+                <ul>
+                    <li><a href="{% url 'adoption_guide' %}">Как усыновить</a></li>
+                    <li><a href="{% url 'donations' %}">Пожертвования</a></li>
+                    <li><a href="{% url 'volunteer' %}">Волонтерство</a></li>
+                    <li><a href="{% url 'faq' %}">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section contact-info">
+                <h3>Контакты</h3>
+                <p>📍 ул. Ленина, 123, Москва</p>
+                <p>📞 +7 (495) 123-45-67</p>
+                <p>✉️ info@shelter.ru</p>
+                <div class="social-links">
+                    <a href="#" class="social-icon">VK</a>
+                    <a href="#" class="social-icon">TG</a>
+                    <a href="#" class="social-icon">YT</a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Поддержка</h3>
+                <ul>
+                    <li><a href="#" onclick="openSupportModal()">Связаться с нами</a></li>
+                    <li><a href="{% url 'terms' %}">Правила</a></li>
+                    <li><a href="{% url 'privacy' %}">Политика конфиденциальности</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Приют "Верные друзья". Все права защищены.</p>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Вход в аккаунт</h2>
+                <button class="close-modal" onclick="closeLoginModal()">&times;</button>
+            </div>
+            <form method="POST" action="{% url 'login' %}" onsubmit="handleLogin(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" name="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-search">Войти</button>
+                <p style="text-align: center; margin-top: 1rem;">
+                    Нет аккаунта? <a href="#" style="color: var(--primary);" onclick="openRegisterModal()">Регистрация</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal" id="registerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Регистрация</h2>
+                <button class="close-modal" onclick="closeRegisterModal()">&times;</button>
+            </div>
+            <form method="POST" action="{% url 'register' %}" onsubmit="handleRegister(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Имя</label>
+                    <input type="text" name="first_name" required placeholder="Иван">
+                </div>
+                <div class="form-group">
+                    <label>Фамилия</label>
+                    <input type="text" name="last_name" required placeholder="Иванов">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="tel" name="phone" required placeholder="+7 (999) 123-45-67">
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" name="password" required placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>Подтверждение пароля</label>
+                    <input type="password" name="password_confirm" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-search">Зарегистрироваться</button>
+                <p style="text-align: center; margin-top: 1rem;">
+                    Уже есть аккаунт? <a href="#" style="color: var(--primary);" onclick="openLoginModal()">Войти</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reserve Modal -->
+    <div class="modal" id="reserveModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Забронировать встречу</h2>
+                <button class="close-modal" onclick="closeReserveModal()">&times;</button>
+            </div>
+            <form method="POST" action="{% url 'create_reservation' %}" onsubmit="handleReservation(event)">
+                {% csrf_token %}
+                <input type="hidden" name="animal_id" id="reserveAnimalId">
+                <div class="form-group">
+                    <label>Животное</label>
+                    <input type="text" id="reserveAnimalName" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Ваше имя</label>
+                    <input type="text" name="name" required placeholder="Иван Иванов" value="{% if user.is_authenticated %}{{ user.get_full_name }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="tel" name="phone" required placeholder="+7 (999) 123-45-67" value="{% if user.is_authenticated %}{{ user.phone }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required placeholder="your@email.com" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label>Дата посещения</label>
+                    <input type="date" name="visit_date" required>
+                </div>
+                <div class="form-group">
+                    <label>Комментарий</label>
+                    <textarea name="comment" placeholder="Расскажите о себе и своих условиях содержания животного"></textarea>
+                </div>
+                <button type="submit" class="btn-search">Отправить заявку</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Support Modal -->
+    <div class="modal" id="supportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Связаться с поддержкой</h2>
+                <button class="close-modal" onclick="closeSupportModal()">&times;</button>
+            </div>
+            <form method="POST" action="{% url 'support_request' %}" onsubmit="handleSupport(event)">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Имя</label>
+                    <input type="text" name="name" required placeholder="Ваше имя" value="{% if user.is_authenticated %}{{ user.get_full_name }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required placeholder="your@email.com" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}">
+                </div>
+                <div class="form-group">
+                    <label>Тема обращения</label>
+                    <select name="subject" required>
+                        <option value="">Выберите тему</option>
+                        <option value="adoption">Вопрос об усыновлении</option>
+                        <option value="volunteer">Волонтерство</option>
+                        <option value="donation">Пожертвования</option>
+                        <option value="technical">Технические проблемы</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Сообщение</label>
+                    <textarea name="message" required placeholder="Опишите ваш вопрос"></textarea>
+                </div>
+                <button type="submit" class="btn-search">Отправить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div id="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
